@@ -35,6 +35,7 @@ build_date=$( date "+%Y-%m-%dT%H-%M" )
 # The project directory is the folder containing this script.
 project_dir=$( dirname "$0" )
 project_dir=$( ( cd "$project_dir" && pwd ) )
+echo "Project directory is ${project_dir}."
 if [ -z "$project_dir" ] ; then
     errck 1 "Error: Could not determine project_dir."
 fi
@@ -50,9 +51,10 @@ fi
 # Prepare rootfs.
 jar_file=minecraft_server.${APP_VERSION}.jar
 rootfs="${project_dir}/rootfs"
-echo "Cleaning up previous build."
+echo "Cleaning up rootfs from previous build."
 rm -frd "$rootfs"
 
+echo "Preparing rootfs."
 mkdir -p ${rootfs}/opt/mc
 mkdir -p ${rootfs}/opt/mc/server/world
 mkdir -p ${rootfs}/opt/mc/bin
@@ -64,9 +66,16 @@ cp ${project_dir}/stop_java_app.sh ${rootfs}/opt/mc/bin/
 cp ${project_dir}/app_cmd.sh ${rootfs}/opt/mc/bin/
 
 # Setup app.
-if [ ! -e "${rootfs}/opt/mc/server/${jar_file}" ] ; then
-    wget https://s3.amazonaws.com/Minecraft.Download/versions/${APP_VERSION}/${jar_file} -O "${rootfs}/opt/mc/server/${jar_file}"
+if [ ! -e "$project_dir/${jar_file}" ] ; then
+    errchk 1 "Minecraft server jar "$project_dir/${jar_file}" not found. Please download it."
 fi
+
+cp "$project_dir/${jar_file}" "${rootfs}/opt/mc/server/${jar_file}"
+
+# The download of the server jars from this link is not available anymore.
+#    echo "Downloading MC server jar from https://s3.amazonaws.com/Minecraft.Download/versions/${APP_VERSION}/${jar_file}."
+#    wget https://s3.amazonaws.com/Minecraft.Download/versions/${APP_VERSION}/${jar_file} -O "${rootfs}/opt/mc/server/${jar_file}"
+
 echo -e "eula=true\n" > ${rootfs}/opt/mc/server/eula.txt
 cat > ${rootfs}/opt/mc/server/server.properties <<EOF
 enable-rcon=true

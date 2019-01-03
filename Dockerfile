@@ -1,4 +1,4 @@
-FROM openjdk:11-jre-alpine
+FROM openjdk:11-jre-slim
 
 ENV APP_NAME Vanilla Minecraft
 ENV APP_VERSION 1.12.2
@@ -6,7 +6,7 @@ ENV JAR_FILE minecraft_server.${APP_VERSION}.jar
 ENV INSTALL_DIR /opt/mc
 ENV APP_DIR ${INSTALL_DIR}/server
 ENV JAVA_MAXHEAP 2048M
-ENV JAVA_MINHEAP 512M
+ENV JAVA_MINHEAP 1024M
 ENV JAVA_PARAM_SUFFIX nogui
 ENV JAVA_PARAM_PREFIX -XX:+UseConcMarkSweepGC
 ENV RCONPWD set_this
