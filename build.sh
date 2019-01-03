@@ -130,5 +130,5 @@ errchk $? "Failed re-tagging image ${image_id}".
 
 # Upload.
 echo "Execute the following commands to upload the image to the remote aws repository."
-echo '   aws_docker_log=$(aws ecr get-login --no-include-email --region eu-central-1)'
+echo '   $( aws ecr get-login --no-include-email --region eu-central-1 )'
 echo "   docker push ${remote_repo_tag}"
