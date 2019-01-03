@@ -35,10 +35,10 @@ build_date=$( date "+%Y-%m-%dT%H-%M" )
 # The project directory is the folder containing this script.
 project_dir=$( dirname "$0" )
 project_dir=$( ( cd "$project_dir" && pwd ) )
-echo "Project directory is ${project_dir}."
 if [ -z "$project_dir" ] ; then
     errck 1 "Error: Could not determine project_dir."
 fi
+echo "Project directory is ${project_dir}."
 
 if [ -n "$image_tag" ] ; then
     local_repo_tag="${local_repo_path}/${repo_name}:${image_tag}"
