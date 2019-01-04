@@ -15,6 +15,7 @@ repo_name="vanilla_minecraft"
 # Default server properties may be changed below.
 # Some options may be set directly in the Dockerfile.
 
+
 errchk() {
     if [ "$1" != "0" ] ; then
 	echo "$2"
@@ -27,18 +28,9 @@ if [ -z "$rconpwd" ] || [ -z "$local_repo_path" ] || [ -z "$remote_repo_path" ] 
     errchk 1 'Configuration variables in script not set. Assign values in script or set corresponding environment variables.'
 fi
 
-APP_VERSION="$1"
-image_tag="$APP_VERSION"
-build_date=$( date "+%Y-%m-%dT%H-%M" )
 
-# project_dir="$(echo ~ubuntu)/docker_work/vanilla_mc"
-# The project directory is the folder containing this script.
-project_dir=$( dirname "$0" )
-project_dir=$( ( cd "$project_dir" && pwd ) )
-if [ -z "$project_dir" ] ; then
-    errck 1 "Error: Could not determine project_dir."
-fi
-echo "Project directory is ${project_dir}."
+app_version="$1"
+image_tag="$app_version"
 
 if [ -n "$image_tag" ] ; then
     local_repo_tag="${local_repo_path}/${repo_name}:${image_tag}"
@@ -49,8 +41,9 @@ else
 fi
 
 # Prepare rootfs.
-jar_file=minecraft_server.${APP_VERSION}.jar
+jar_file=minecraft_server.${app_version}.jar
 rootfs="${project_dir}/rootfs"
+
 echo "Cleaning up rootfs from previous build."
 rm -frd "$rootfs"
 
@@ -71,10 +64,6 @@ if [ ! -e "$project_dir/${jar_file}" ] ; then
 fi
 
 cp "$project_dir/${jar_file}" "${rootfs}/opt/mc/server/${jar_file}"
-
-# The download of the server jars from this link is not available anymore.
-#    echo "Downloading MC server jar from https://s3.amazonaws.com/Minecraft.Download/versions/${APP_VERSION}/${jar_file}."
-#    wget https://s3.amazonaws.com/Minecraft.Download/versions/${APP_VERSION}/${jar_file} -O "${rootfs}/opt/mc/server/${jar_file}"
 
 echo -e "eula=true\n" > ${rootfs}/opt/mc/server/eula.txt
 cat > ${rootfs}/opt/mc/server/server.properties <<EOF
@@ -114,7 +103,7 @@ EOF
 
 # Build.
 echo "Building $local_repo_tag"
-RCONPWD="${rconpwd}" APP_VERSION="${APP_VERSION}" docker build "${project_dir}" -t "${local_repo_tag}"
+RCONPWD="${rconpwd}" APP_VERSION="${app_version}" docker build "${project_dir}" -t "${local_repo_tag}"
 errchk $? 'Docker build failed.'
 
 # Get image id.
@@ -129,6 +118,6 @@ docker tag "${image_id}" "${remote_repo_tag}"
 errchk $? "Failed re-tagging image ${image_id}".
 
 # Upload.
-echo "Execute the following commands to upload the image to the remote aws repository."
-echo '   $( aws ecr get-login --no-include-email --region eu-central-1 )'
+echo "Execute the following commands to upload the image to a remote aws repository."
+echo '   $(aws ecr get-login --no-include-email --region eu-central-1)'
 echo "   docker push ${remote_repo_tag}"
