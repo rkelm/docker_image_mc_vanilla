@@ -1,4 +1,4 @@
-#!/bin/ash
+#!/bin/bash
 # Script to gracefully stop mc server.
 
 echo "Gracefully stopping java app."

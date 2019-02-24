@@ -1,4 +1,4 @@
-#!/bin/ash
+#!/bin/bash
 # Starts java app.
 # Respects env variables.
 # Stops app gracefully on trap SIGTERM.
@@ -31,8 +31,10 @@ sigterm_handler() {
 # Trap sigterm sent by docker stop.
 trap sigterm_handler SIGTERM
 
+# Change to server directory with configuration files.
+# This is the directory where a named docker volume is mounted.
+cd "${SERVER_DIR}"
 # Run app.
-cd "$APP_DIR"
 $java_cmd $java_opt ${JAVA_PARAM_PREFIX} -jar $jar_path ${JAVA_PARAM_SUFFIX} &
 pid="$!"
 echo $pid > ${INSTALL_DIR}/pid.txt

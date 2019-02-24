@@ -10,7 +10,7 @@ fi
 rconpwd="$BAKERY_RCONPWD"
 local_repo_path="$BAKERY_LOCAL_REPO_PATH"
 remote_repo_path="$BAKERY_REMOTE_REPO_PATH"
-repo_name="vanilla_minecraft"
+repo_name="vanilla_minecraft_2"
 
 # Default server properties may be changed below.
 # Some options may be set directly in the Dockerfile.
@@ -57,6 +57,7 @@ rm -frd "$rootfs"
 echo "Preparing rootfs."
 mkdir -p ${rootfs}/opt/mc
 mkdir -p ${rootfs}/opt/mc/server/world
+mkdir -p ${rootfs}/opt/mc/jar
 mkdir -p ${rootfs}/opt/mc/bin
 
 cp ${project_dir}/mcrcon ${rootfs}/opt/mc/bin/
@@ -70,7 +71,7 @@ if [ ! -e "$project_dir/${jar_file}" ] ; then
     errchk 1 "Minecraft server jar "$project_dir/${jar_file}" not found. Please download it."
 fi
 
-cp "$project_dir/${jar_file}" "${rootfs}/opt/mc/server/${jar_file}"
+cp "$project_dir/${jar_file}" "${rootfs}/opt/mc/jar/${jar_file}"
 
 echo -e "eula=true\n" > ${rootfs}/opt/mc/server/eula.txt
 cat > ${rootfs}/opt/mc/server/server.properties <<EOF
@@ -110,7 +111,8 @@ EOF
 
 # Build.
 echo "Building $local_repo_tag"
-RCONPWD="${rconpwd}" APP_VERSION="${app_version}" docker build "${project_dir}" -t "${local_repo_tag}"
+docker build "${project_dir}" --build-arg RCONPWD="${rconpwd}" --build-arg APP_VERSION="${app_version}" -t "${local_repo_tag}" 
+
 errchk $? 'Docker build failed.'
 
 # Get image id.
