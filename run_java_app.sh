@@ -25,11 +25,20 @@ sigterm_handler() {
 	    "${INSTALL_DIR}/bin/stop_java_app.sh"
 	    wait "$pid"
 	fi
+	# Call prepare script if exists.
+	if test -e "${INSTALL_DIR}/bin/unprepare_java_app.sh" -a -x "${INSTALL_DIR}/bin/unprepare_java_app.sh" ; then
+	    "${INSTALL_DIR}/bin/unprepare_java_app.sh"
+	fi
     fi
 }
 
 # Trap sigterm sent by docker stop.
 trap sigterm_handler SIGTERM
+
+# Call prepare script if exists.
+if test -e "${INSTALL_DIR}/bin/prepare_java_app.sh" -a -x "${INSTALL_DIR}/bin/prepare_java_app.sh" ; then
+    "${INSTALL_DIR}/bin/prepare_java_app.sh"
+fi
 
 # Change to server directory with configuration files.
 # This is the directory where a named docker volume is mounted.
