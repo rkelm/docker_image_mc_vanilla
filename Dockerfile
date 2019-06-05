@@ -18,6 +18,7 @@ ENV PATH ${INSTALL_DIR}/bin:$PATH
 
 RUN apt-get update
 RUN apt-get -y install musl > /dev/null
+RUN apt-get -y install procps > /dev/null
 
 ADD rootfs /
 
