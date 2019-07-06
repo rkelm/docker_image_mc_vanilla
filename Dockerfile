@@ -1,4 +1,4 @@
-FROM openjdk:11-jre-slim
+FROM openjdk:8-jdk-slim
 
 ENV APP_NAME Vanilla Minecraft
 ARG APP_VERSION
@@ -15,6 +15,9 @@ ARG RCONPWD
 ENV RCONPWD ${RCONPWD}
 ENV GRACEFUL_STOP_TIMEOUT 30
 ENV PATH ${INSTALL_DIR}/bin:$PATH
+# Copy latest.log to standard out only necessary for vanilla mc jar.
+ARG ECHO_LOG2STDOUT=NO
+ENV ECHO_LOG2STDOUT ${ECHO_LOG2STDOUT}
 
 RUN apt-get update
 RUN apt-get -y install musl > /dev/null

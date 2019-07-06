@@ -10,7 +10,7 @@ fi
 rconpwd="$BAKERY_RCONPWD"
 local_repo_path="$BAKERY_LOCAL_REPO_PATH"
 remote_repo_path="$BAKERY_REMOTE_REPO_PATH"
-repo_name="vanilla_minecraft_2"
+repo_name="vanilla_minecraft_jdk8_2"
 
 # Default server properties may be changed below.
 # Some options may be set directly in the Dockerfile.
@@ -111,7 +111,7 @@ EOF
 
 # Build.
 echo "Building $local_repo_tag"
-docker build "${project_dir}" --build-arg RCONPWD="${rconpwd}" --build-arg APP_VERSION="${app_version}" -t "${local_repo_tag}" 
+docker build "${project_dir}" --build-arg RCONPWD="${rconpwd}" --build-arg APP_VERSION="${app_version}" --build-arg ECHO_LOG2STDOUT="NO" -t "${local_repo_tag}" 
 
 errchk $? 'Docker build failed.'
 
