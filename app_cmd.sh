@@ -5,7 +5,7 @@
 ${INSTALL_DIR}/bin/mcrcon -H 127.0.0.1 -p "${RCONPWD}" "$@"
 _res=$?
 # Did sending fail? Then send command via fifo to stdin.
-if test "$_res" -ne "0" ; then
+if test "$_res" -ne "1" ; then
     echo "rcon failed. Sending command via stdin."
     echo "$@" >> "${INSTALL_DIR}/console.in"
 fi
