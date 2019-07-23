@@ -19,15 +19,11 @@ sigterm_handler() {
     # app still running?
     echo "Caught SIGTERM signal."
     if test -n "$pid" ; then
-	_out=$(ps -o pid | grep -w "$pid")
+	_out=$(ps -e -o pid | grep -w "$pid" | tr -d '[:space:]' )
 	if test "$_out"=="$pid" ; then
 	    echo "Stopping java app."
 	    "${INSTALL_DIR}/bin/stop_java_app.sh"
 	    wait "$pid"
-	fi
-	# Call unprepare script if exists.
-	if test -e "${INSTALL_DIR}/bin/unprepare_java_app.sh" -a -x "${INSTALL_DIR}/bin/unprepare_java_app.sh" ; then
-	    "${INSTALL_DIR}/bin/unprepare_java_app.sh"
 	fi
     fi
 }
