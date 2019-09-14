@@ -30,7 +30,6 @@ RUN echo -e ' ************************************************** \n' \
   '\n' \
   'Usage: \n' \
   "   Start service: docker run -v <host-world-dir>:${SERVER_DIR}/world \\ \n" \
-  "                             -v <host-log-dir>:${SERVER_DIR}/logs \\ \n" \
   "                             -d <image_name> ${INSTALL_DIR}/bin/run_java_app.sh \n" \
   "   Stop service:  docker exec ${INSTALL_DIR}/bin/stop_java_app.sh \n" \
   "   Send command:  docker exec ${INSTALL_DIR}/bin/app_cmd.sh  \\ \n" \

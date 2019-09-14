@@ -8,6 +8,11 @@ java_cmd="java"
 jar_path="${APP_DIR}/${JAR_FILE}"
 java_opt=""
 
+# Output environment for logging.
+echo "Starting $0 $@"
+echo "Environment:"
+env | sort
+
 if test -n "${JAVA_MAXHEAP}" ; then
     java_opt="$java_opt -Xmx${JAVA_MAXHEAP}"
 fi
@@ -40,8 +45,8 @@ fi
 # This is the directory where a named docker volume is mounted.
 cd "${SERVER_DIR}"
 echo "Creating fifo $fifo as stdin of java background process."
-[ -e "$fifo" ] && rm $fifo
-mkfifo $fifo
+[ -e "$fifo" ] && rm "$fifo"
+mkfifo "$fifo"
 
 # Run app.
 tail -n +1 -f ${fifo} | $java_cmd $java_opt ${JAVA_PARAM_PREFIX} -jar $jar_path ${JAVA_PARAM_SUFFIX} &
