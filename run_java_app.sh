@@ -79,4 +79,13 @@ fi
 # Wait until app dies.
 echo "Waiting for process with pid $pid to end."
 wait "$pid"
-echo "Process with pid $pid has ended."
+echo "Java app process with pid $pid has ended."
+
+# Clean up.
+# Call unprepare script if exists.
+if test -e "${INSTALL_DIR}/bin/unprepare_java_app.sh" -a -x "${INSTALL_DIR}/bin/unprepare_java_app.sh" ; then
+    echo "Running ${INSTALL_DIR}/bin/unprepare_java_app.sh."
+    "${INSTALL_DIR}/bin/unprepare_java_app.sh"
+fi
+
+# If this script is running as the main container process, the docker image will be killed when this script ends.
