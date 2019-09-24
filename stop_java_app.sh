@@ -39,26 +39,7 @@ function terminate_pid()
 }
 
 echo "Gracefully stopping java app."
-#echo "Announcing server stop to users."
-
-#command_cmd="${INSTALL_DIR}/bin/app_cmd.sh"
-
-#$command_cmd 'say Server shutting down in 10 seconds!!'
-#echo 'say Server shutting down in 10 seconds!!'
-#sleep 5
-#$command_cmd 'say Server shutting down in 5 seconds!!'
-#echo 'say Server shutting down in 5 seconds!!'
-#sleep 2
-#$command_cmd 'say Server shutting down in 3 seconds!!'
-#'say Server shutting down in 3 seconds!!'
-#sleep 1
-#$command_cmd 'say Server shutting down in 2 seconds!!'
-#'say Server shutting down in 2 seconds!!'
-#sleep 1
-#$command_cmd 'say Server shutting down in 1 second!!'
-#'say Server shutting down in 1 second!!'
-#sleep 1
-#$command_cmd 'save-all'
+command_cmd="${INSTALL_DIR}/bin/app_cmd.sh"
 
 $command_cmd 'stop'
 

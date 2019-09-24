@@ -111,7 +111,7 @@ EOF
 
 # Build.
 echo "Building $local_repo_tag"
-docker build "${project_dir}" --build-arg RCONPWD="${rconpwd}" --build-arg APP_VERSION="${app_version}" --build-arg ECHO_LOG2STDOUT="NO" -t "${local_repo_tag}" 
+docker build "${project_dir}" --no-cache --build-arg RCONPWD="${rconpwd}" --build-arg APP_VERSION="${app_version}" --build-arg ECHO_LOG2STDOUT="NO" -t "${local_repo_tag}" 
 
 errchk $? 'Docker build failed.'
 
