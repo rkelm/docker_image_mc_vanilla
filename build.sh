@@ -67,11 +67,15 @@ cp ${project_dir}/stop_java_app.sh ${rootfs}/opt/mc/bin/
 cp ${project_dir}/app_cmd.sh ${rootfs}/opt/mc/bin/
 
 # Setup app.
-if [ ! -e "$project_dir/${jar_file}" ] ; then
-    errchk 1 "Minecraft server jar "$project_dir/${jar_file}" not found. Please download it."
+if [ -e "$project_dir/${jar_file}" ] ; then
+    cp "$project_dir/${jar_file}" "${rootfs}/opt/mc/jar/${jar_file}"
+elif [ -e "/vagrant/${jar_file}" ] ; then
+    cp "/vagrant/${jar_file}" "${rootfs}/opt/mc/jar/${jar_file}"
+else
+    errchk 1 "Minecraft server jar "${jar_file}" not found in /vagrant or "$project_dir". Please download it."
 fi
 
-cp "$project_dir/${jar_file}" "${rootfs}/opt/mc/jar/${jar_file}"
+
 
 echo -e "eula=true\n" > ${rootfs}/opt/mc/server/eula.txt
 cat > ${rootfs}/opt/mc/server/server.properties <<EOF
