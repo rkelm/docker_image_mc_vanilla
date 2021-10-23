@@ -1,2 +1,4 @@
 rootfs/
 minecraft_server.*.jar
+version_detail.json
+version_manifest.json

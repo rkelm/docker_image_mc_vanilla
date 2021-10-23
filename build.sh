@@ -4,17 +4,7 @@ if [ -z $1 ] ; then
     echo "usage: $(basename $0) <mc_version>"
     exit 1
 fi
-
-# ***** Configuration *****
-# Assign configuration values here or set environment variables.
-rconpwd="$BAKERY_RCONPWD"
-local_repo_path="$BAKERY_LOCAL_REPO_PATH"
-remote_repo_path="$BAKERY_REMOTE_REPO_PATH"
-repo_name="vanilla_minecraft_jdk8_2"
-
-# Default server properties may be changed below.
-# Some options may be set directly in the Dockerfile.
-
+# ***** Functions *****
 
 errchk() {
     if [ "$1" != "0" ] ; then
@@ -23,6 +13,68 @@ errchk() {
 	exit 1
     fi
 }
+
+ver_cmp() {
+    local IFS=.
+    local V1=($1) V2=($2) I
+    for ((I=0 ; I<${#V1[*]} || I<${#V2[*]} ; I++)) ; do
+	[[ ${V1[$I]:-0} -lt ${V2[$I]:-0} ]] && echo -1 && return
+	[[ ${V1[$I]:-0} -gt ${V2[$I]:-0} ]] && echo 1 && return
+    done
+    echo 0
+ }
+
+ver_ge() {
+    [[ ! $(ver_cmp "$1" "$2") -eq -1 ]]
+}
+
+download_mc_srv() {
+    # Downloads minecraft server jar in specified version to specified file name.
+    # Parameters:
+    #    minecraft version
+    #    output file name
+    # Download version manifest.
+    wget -q https://launchermeta.mojang.com/mc/game/version_manifest.json -O version_manifest.json
+    version_detail_url=$( jq -r ".versions[] | select(.id==\"$1\") | .url" version_manifest.json )
+    if [ -z "$version_detail_url" ] ; then
+	echo "Could not determine url for minecraft detail json file for version $1. Maybe invalid version specified?"
+	exit 1
+    fi
+    wget -q $version_detail_url -O version_detail.json
+    server_jar_url=$( jq -r .downloads.server.url version_detail.json )
+    wget -q $server_jar_url -O $2
+    if [ ! -f $2 ] ; then
+	echo "Could not download $server_jar_url to $2."
+	exit 1
+    fi
+}
+
+# ***** Configuration *****
+# Assign configuration values here or set environment variables.
+minecraft_server_dl="https://mcversions.net/download/"
+rconpwd="$BAKERY_RCONPWD"
+local_repo_path="$BAKERY_LOCAL_REPO_PATH"
+remote_repo_path="$BAKERY_REMOTE_REPO_PATH"
+# Starting with minecraft 1.12 JDK 8 is used.
+repo_name_1_12="vanilla_minecraft_jdk8_2"
+# Starting with minecraft 1.17 JDK 11 is used.
+repo_name_1_17="vanilla_minecraft_eclipse-temurin-jdk11"
+Dockerfile_1_12="Dockerfile_1_12"
+Dockerfile_1_17="Dockerfile_1_17"
+
+if ver_ge $1 "1.17" ; then
+    Dockerfile="${Dockerfile_1_17}"
+    repo_name="${repo_name_1_17}"
+elif ver_ge $1 "1.12" ; then
+    Dockerfile="${Dockerfile_1_12}"
+    repo_name="${repo_name_1_12}"    
+else
+    errchk 1 "$1 ist an unssupported Mincecraft version."
+fi
+echo "Using Dockerfile ${Dockerfile}."
+
+# Default server properties may be changed below.
+# Some options may be set directly in the Dockerfile.
 
 if [ -z "$rconpwd" ] || [ -z "$local_repo_path" ] || [ -z "$remote_repo_path" ] ; then
     errchk 1 'Configuration variables in script not set. Assign values in script or set corresponding environment variables.'
@@ -68,14 +120,20 @@ cp ${project_dir}/app_cmd.sh ${rootfs}/opt/mc/bin/
 
 # Setup app.
 if [ -e "$project_dir/${jar_file}" ] ; then
-    cp "$project_dir/${jar_file}" "${rootfs}/opt/mc/jar/${jar_file}"
+    echo "Using local version of minecraft server jar file $project_dir/${jar_file}."
+    jar_file_src="$project_dir/${jar_file}"
 elif [ -e "/vagrant/${jar_file}" ] ; then
-    cp "/vagrant/${jar_file}" "${rootfs}/opt/mc/jar/${jar_file}"
+    echo "Using local version of minecraft server jar file $vagrant/${jar_file}."    
+    jar_file_src="/vagrant/${jar_file}"
 else
-    errchk 1 "Minecraft server jar "${jar_file}" not found in /vagrant or "$project_dir". Please download it."
+    echo "Minecraft server jar "${jar_file}" not found in /vagrant or "$project_dir". Downloading..."
+    download_mc_srv $app_version "${project_dir}/${jar_file}"
+    #    wget "${minecraft_server_dl}${app_version}" -O "${project_dir}/${jar_file}"
+    errchk $? "Could not download Minecraft server from ${minecraft_server_dl}${app_version}. Maybe you specified an invalid version?"
+    jar_file_src="${project_dir}/${jar_file}"
 fi
-
-
+cp "${jar_file_src}" "${rootfs}/opt/mc/jar/${jar_file}"
+echo cp
 
 echo -e "eula=true\n" > ${rootfs}/opt/mc/server/eula.txt
 cat > ${rootfs}/opt/mc/server/server.properties <<EOF
@@ -115,7 +173,7 @@ EOF
 
 # Build.
 echo "Building $local_repo_tag"
-docker build "${project_dir}" --no-cache --build-arg RCONPWD="${rconpwd}" --build-arg APP_VERSION="${app_version}" --build-arg ECHO_LOG2STDOUT="NO" -t "${local_repo_tag}" 
+docker build "${project_dir}" --no-cache --build-arg RCONPWD="${rconpwd}" --build-arg APP_VERSION="${app_version}" --build-arg ECHO_LOG2STDOUT="NO" -t "${local_repo_tag}" -f "${Dockerfile}"
 
 errchk $? 'Docker build failed.'
 
