@@ -16,11 +16,11 @@ remote_repo_path="$BAKERY_REMOTE_REPO_PATH"
 tag_name_ext_1_12_jdk="_jdk8"
 tag_name_ext_1_12_jdk_type="_jdk8_oracle"
 #repo_name_1_12="vanilla_minecraft_jdk8_2"
-# Starting with minecraft 1.17 JDK 11 is used.
-#repo_name_1_17="vanilla_minecraft_eclipse-temurin-jdk11"
+# Starting with minecraft 1.17 JDK 16 is used.
+#repo_name_1_17="vanilla_minecraft_eclipse-temurin-jdk16"
 #repo_name_1_17="vanilla_minecraft"
-tag_name_ext_1_17_jdk="_jdk11"
-tag_name_ext_1_17_jdk_type="_jdk11_eclipse-temurin"
+tag_name_ext_1_17_jdk="_jdk16"
+tag_name_ext_1_17_jdk_type="_jdk16_eclipse-temurin"
 Dockerfile_1_12="Dockerfile_1_12"
 Dockerfile_1_17="Dockerfile_1_17"
 repo_name='minecraft_vanilla'
