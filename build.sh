@@ -4,6 +4,27 @@ if [ -z $1 ] ; then
     echo "usage: $(basename $0) <mc_version>"
     exit 1
 fi
+
+# ***** Configuration *****
+# Assign configuration values here or set environment variables.
+minecraft_server_dl="https://mcversions.net/download/"
+rconpwd="$BAKERY_RCONPWD"
+local_repo_path="$BAKERY_LOCAL_REPO_PATH"
+remote_repo_path="$BAKERY_REMOTE_REPO_PATH"
+# Starting with minecraft 1.12 JDK 8 is used.
+#repo_name_1_12="vanilla_minecraft"
+tag_name_ext_1_12_jdk="_jdk8"
+tag_name_ext_1_12_jdk_type="_jdk8_oracle"
+#repo_name_1_12="vanilla_minecraft_jdk8_2"
+# Starting with minecraft 1.17 JDK 11 is used.
+#repo_name_1_17="vanilla_minecraft_eclipse-temurin-jdk11"
+#repo_name_1_17="vanilla_minecraft"
+tag_name_ext_1_17_jdk="_jdk11"
+tag_name_ext_1_17_jdk_type="_jdk11_eclipse-temurin"
+Dockerfile_1_12="Dockerfile_1_12"
+Dockerfile_1_17="Dockerfile_1_17"
+repo_name='minecraft_vanilla'
+
 # ***** Functions *****
 
 errchk() {
@@ -35,13 +56,13 @@ download_mc_srv() {
     #    output file name
     # Download version manifest.
     wget -q https://launchermeta.mojang.com/mc/game/version_manifest.json -O version_manifest.json
-    version_detail_url=$( jq -r ".versions[] | select(.id==\"$1\") | .url" version_manifest.json )
+    local version_detail_url=$( jq -r ".versions[] | select(.id==\"$1\") | .url" version_manifest.json )
     if [ -z "$version_detail_url" ] ; then
 	echo "Could not determine url for minecraft detail json file for version $1. Maybe invalid version specified?"
 	exit 1
     fi
     wget -q $version_detail_url -O version_detail.json
-    server_jar_url=$( jq -r .downloads.server.url version_detail.json )
+    local server_jar_url=$( jq -r .downloads.server.url version_detail.json )
     wget -q $server_jar_url -O $2
     if [ ! -f $2 ] ; then
 	echo "Could not download $server_jar_url to $2."
@@ -49,25 +70,27 @@ download_mc_srv() {
     fi
 }
 
-# ***** Configuration *****
-# Assign configuration values here or set environment variables.
-minecraft_server_dl="https://mcversions.net/download/"
-rconpwd="$BAKERY_RCONPWD"
-local_repo_path="$BAKERY_LOCAL_REPO_PATH"
-remote_repo_path="$BAKERY_REMOTE_REPO_PATH"
-# Starting with minecraft 1.12 JDK 8 is used.
-repo_name_1_12="vanilla_minecraft_jdk8_2"
-# Starting with minecraft 1.17 JDK 11 is used.
-repo_name_1_17="vanilla_minecraft_eclipse-temurin-jdk11"
-Dockerfile_1_12="Dockerfile_1_12"
-Dockerfile_1_17="Dockerfile_1_17"
+tag_image() {
+    # Tags docker image.
+    local image_id=$1
+    local repo_path=$2
+    local repo_name=$3
+    local tag_name=$4
+    docker tag "${image_id}" "${repo_path}/${repo_name}:${tag_name}"
+    errchk $? "Failed re-tagging image ${image_id}".
+ 
+}
 
 if ver_ge $1 "1.17" ; then
     Dockerfile="${Dockerfile_1_17}"
-    repo_name="${repo_name_1_17}"
+#    repo_name="${repo_name_1_17}"
+    tag_name_ext_jdk=$tag_name_ext_1_17_jdk
+    tag_name_ext_jdk_type=$tag_name_ext_1_17_jdk_type
 elif ver_ge $1 "1.12" ; then
     Dockerfile="${Dockerfile_1_12}"
-    repo_name="${repo_name_1_12}"    
+#    repo_name="${repo_name_1_12}"    
+    tag_name_ext_jdk=$tag_name_ext_1_12_jdk
+    tag_name_ext_jdk_type=$tag_name_ext_1_12_jdk_type
 else
     errchk 1 "$1 ist an unssupported Mincecraft version."
 fi
@@ -89,15 +112,15 @@ fi
 echo "Project directory is ${project_dir}."
 
 app_version="$1"
-image_tag="$app_version"
+tag_name="$app_version"
 
-if [ -n "$image_tag" ] ; then
-    local_repo_tag="${local_repo_path}/${repo_name}:${image_tag}"
-    remote_repo_tag="${remote_repo_path}/${repo_name}:${image_tag}"    
-else
-    local_repo_tag="${local_repo_path}:${repo_name}"
-    remote_repo_tag="${remote_repo_path}:${repo_name}"
-fi
+# if [ -n "$tag_name" ] ; then
+local_repo_tag="${local_repo_path}/${repo_name}:${tag_name}"
+remote_repo_tag="${remote_repo_path}/${repo_name}:${tag_name}"    
+#else
+#    local_repo_tag="${local_repo_path}:${repo_name}"
+#    remote_repo_tag="${remote_repo_path}:${repo_name}"
+#fi
 
 # Prepare rootfs.
 jar_file=minecraft_server.${app_version}.jar
@@ -173,7 +196,8 @@ EOF
 
 # Build.
 echo "Building $local_repo_tag"
-docker build "${project_dir}" --no-cache --build-arg RCONPWD="${rconpwd}" --build-arg APP_VERSION="${app_version}" --build-arg ECHO_LOG2STDOUT="NO" -t "${local_repo_tag}" -f "${Dockerfile}"
+# --no-cache
+docker build "${project_dir}" --build-arg RCONPWD="${rconpwd}" --build-arg APP_VERSION="${app_version}" --build-arg ECHO_LOG2STDOUT="NO" -t "${local_repo_tag}" -f "${Dockerfile}"
 
 errchk $? 'Docker build failed.'
 
@@ -185,10 +209,16 @@ errchk $? 'Could not retrieve docker image id.'
 echo "Image id is ${image_id}."
 
 # Tag for Upload to aws repo.
-docker tag "${image_id}" "${remote_repo_tag}"
-errchk $? "Failed re-tagging image ${image_id}".
+tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}"
+tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk}"
+tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk_type}"
+
+tag_image "${image_id}" "${local_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk}"
+tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk_type}"
 
 # Upload.
 echo "Execute the following commands to upload the image to a remote aws repository."
 echo '   $(aws ecr get-login --no-include-email --region eu-central-1)'
-echo "   docker push ${remote_repo_tag}"
+echo "   docker push ${remote_repo_path}/${repo_name}:${tag_name}"
+echo "   docker push ${remote_repo_path}/${repo_name}:${tag_name}${tag_name_ext_jdk}"
+echo "   docker push ${remote_repo_path}/${repo_name}:${tag_name}${tag_name_ext_jdk_type}"
