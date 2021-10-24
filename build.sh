@@ -81,6 +81,7 @@ tag_image() {
  
 }
 
+# ***** Initialize *****
 if ver_ge $1 "1.17" ; then
     Dockerfile="${Dockerfile_1_17}"
 #    repo_name="${repo_name_1_17}"
@@ -122,6 +123,7 @@ remote_repo_tag="${remote_repo_path}/${repo_name}:${tag_name}"
 #    remote_repo_tag="${remote_repo_path}:${repo_name}"
 #fi
 
+# ***** Prepare build *****
 # Prepare rootfs.
 jar_file=minecraft_server.${app_version}.jar
 rootfs="${project_dir}/rootfs"
@@ -194,7 +196,7 @@ use-native-transport=true
 motd=Minecraft
 EOF
 
-# Build.
+# ***** Build *****
 echo "Building $local_repo_tag"
 # --no-cache
 docker build "${project_dir}" --build-arg RCONPWD="${rconpwd}" --build-arg APP_VERSION="${app_version}" --build-arg ECHO_LOG2STDOUT="NO" -t "${local_repo_tag}" -f "${Dockerfile}"
@@ -208,6 +210,11 @@ test -n $image_id
 errchk $? 'Could not retrieve docker image id.'
 echo "Image id is ${image_id}."
 
+# ***** Test *****
+test/test_simple_run.sh "${local_repo_path}/${repo_name}:${tag_name}"
+errchk $? "Test run of ${local_repo_path}/${repo_name}:${tag_name} failed."
+
+# ***** Upload *****
 # Tag for Upload to aws repo.
 tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}"
 tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk}"
@@ -216,9 +223,21 @@ tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}${tag_n
 tag_image "${image_id}" "${local_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk}"
 tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk_type}"
 
-# Upload.
-echo "Execute the following commands to upload the image to a remote aws repository."
-echo '   $(aws ecr get-login --no-include-email --region eu-central-1)'
-echo "   docker push ${remote_repo_path}/${repo_name}:${tag_name}"
-echo "   docker push ${remote_repo_path}/${repo_name}:${tag_name}${tag_name_ext_jdk}"
-echo "   docker push ${remote_repo_path}/${repo_name}:${tag_name}${tag_name_ext_jdk_type}"
+# Upload image if env vars are set
+if [ ! -z BAKERY_REMOTE_REPO_PATH ] && [ ! -z AWS_ACCESS_KEY_ID ] && [ ! -z AWS_SECRET_ACCESS_KEY ] && \
+       [ ! -z AWS_DEFAULT_REGION ] ; then
+    echo "Logging in to aws account."
+    $(aws ecr get-login --no-include-email --region eu-central-1)
+    echo "Pushing ${remote_repo_path}/${repo_name}:${tag_name}${tag_name_ext_jdk_type} to remote repository."
+    docker push "${remote_repo_path}/${repo_name}:${tag_name}${tag_name_ext_jdk_type}"
+    echo "Pushing ${remote_repo_path}/${repo_name}:${tag_name}${tag_name_ext_jdk} to remote repository."
+    docker push "${remote_repo_path}/${repo_name}:${tag_name}${tag_name_ext_jdk}"
+    echo "Pushing ${remote_repo_path}/${repo_name}:${tag_name} to remote repository."
+    docker push "${remote_repo_path}/${repo_name}:${tag_name}"
+else
+    echo "Execute the following commands to upload the image to a remote aws repository."
+    echo '   $(aws ecr get-login --no-include-email --region eu-central-1)'
+    echo "   docker push ${remote_repo_path}/${repo_name}:${tag_name}${tag_name_ext_jdk_type}"
+    echo "   docker push ${remote_repo_path}/${repo_name}:${tag_name}${tag_name_ext_jdk}"
+    echo "   docker push ${remote_repo_path}/${repo_name}:${tag_name}"
+fi
