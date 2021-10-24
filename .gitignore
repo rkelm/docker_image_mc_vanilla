@@ -2,3 +2,5 @@ rootfs/
 minecraft_server.*.jar
 version_detail.json
 version_manifest.json
+*~
+test/test_simple_run.log
