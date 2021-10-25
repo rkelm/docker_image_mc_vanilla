@@ -216,16 +216,20 @@ errchk $? "Test run of ${local_repo_path}/${repo_name}:${tag_name} failed."
 
 # ***** Upload *****
 # Tag for Upload to aws repo.
-tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}"
-tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk}"
-tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk_type}"
-
 tag_image "${image_id}" "${local_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk}"
-tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk_type}"
+tag_image "${image_id}" "${local_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk_type}"
+
+if [ ! -z "$BAKERY_REMOTE_REPO_PATH" ] ; then
+    tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}"
+    tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk}"
+    tag_image "${image_id}" "${remote_repo_path}" "${repo_name}" "${tag_name}${tag_name_ext_jdk_type}"
+else
+    echo "Environment variable BAKERY_REMOTE_REPO_PATH not set. Skipping retagging image."
+fi
 
 # Upload image if env vars are set
-if [ ! -z BAKERY_REMOTE_REPO_PATH ] && [ ! -z AWS_ACCESS_KEY_ID ] && [ ! -z AWS_SECRET_ACCESS_KEY ] && \
-       [ ! -z AWS_DEFAULT_REGION ] ; then
+if [ ! -z "$BAKERY_REMOTE_REPO_PATH" ] && [ ! -z "$AWS_ACCESS_KEY_ID" ] && [ ! -z "$AWS_SECRET_ACCESS_KEY" ] && \
+       [ ! -z "$AWS_DEFAULT_REGION" ] ; then
     echo "Logging in to aws account."
     $(aws ecr get-login --no-include-email --region eu-central-1)
     echo "Pushing ${remote_repo_path}/${repo_name}:${tag_name}${tag_name_ext_jdk_type} to remote repository."
