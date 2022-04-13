@@ -23,6 +23,7 @@ tag_name_ext_1_17_jdk="_jdk16"
 tag_name_ext_1_17_jdk_type="_jdk16_eclipse-temurin"
 Dockerfile_1_12="Dockerfile_1_12"
 Dockerfile_1_17="Dockerfile_1_17"
+Dockerfile_1_18="Dockerfile_1_18"
 repo_name='minecraft_vanilla'
 
 # ***** Functions *****
@@ -82,7 +83,12 @@ tag_image() {
 }
 
 # ***** Initialize *****
-if ver_ge $1 "1.17" ; then
+if ver_ge $1 "1.18" ; then
+    Dockerfile="${Dockerfile_1_18}"
+#    repo_name="${repo_name_1_17}"
+    tag_name_ext_jdk=$tag_name_ext_1_18_jdk
+    tag_name_ext_jdk_type=$tag_name_ext_1_18_jdk_type
+elif ver_ge $1 "1.17" ; then
     Dockerfile="${Dockerfile_1_17}"
 #    repo_name="${repo_name_1_17}"
     tag_name_ext_jdk=$tag_name_ext_1_17_jdk
