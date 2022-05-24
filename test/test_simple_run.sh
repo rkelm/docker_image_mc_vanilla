@@ -58,7 +58,7 @@ while [ "$done" == "0" ] ; do
 done
 
 echo Removing test container.
-docker stop "${container_name}" > /dev/null 2>&1
+docker kill "${container_name}" > /dev/null 2>&1
 docker rm -f "${container_name}" > /dev/null 2>&1
 
 # Check log
